@@ -11,7 +11,9 @@ PLOTS_DIR = os.path.join(BASE_DIR, "output", "plots")
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
-#Tieni solo le righe con il valore tra 1 e 99 percentile
+#Rimuove le righe con valori al di fuori dell'intervallo [lo, hi] percentile.
+#Default bilaterale: taglia l'1% inferiore e l'1% superiore (lo=0.01, hi=0.99).
+#Con lo=0 il taglio è solo superiore (nessuna rimozione dal basso).
 def remove_outliers_percentile(df, col, lo=0.01, hi=0.99):
     lower = df[col].quantile(lo)
     upper = df[col].quantile(hi)
