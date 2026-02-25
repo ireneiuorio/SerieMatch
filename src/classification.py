@@ -1,5 +1,5 @@
 #Allena una Random Forest per predire il cluster di una serie TV
-#Ottimizza gli iper parametri con GridSearch, valuta il modello e salva i risultati
+#Ottimizza gli iper-parametri con GridSearch, valuta il modello e salva i risultati
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,7 +21,8 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 #df-> dataframe originale con colonna "cluster"
 #X_scaled-> solo feature già scalate
-def run(df, X_scaled):
+#feature_names-> nomi reali delle colonne (passati da preprocessing.py)
+def run(df, X_scaled, feature_names=None):
 
 #La cosa che voglio prevedere è il cluster
 #y è la risposta corretta che il modello deve imparare
@@ -76,8 +77,7 @@ def run(df, X_scaled):
     best_rf = gs.best_estimator_
     print(f"  Migliori parametri: {gs.best_params_}")
 
-    #Cross Validation:Prende il modello migliore e lo rivaluta 5 volte su tutto
-    #il dataset e restituisce 5 punteggi
+    #Cross Validation:Prende il modello migliore e lo rivaluta 5 volte su tutto il dataset e restituisce 5 punteggi
     cv = cross_val_score(best_rf, X_scaled, y, cv=5, scoring="f1_weighted")
     #Stampo la media e la deviazione standard
     print(f"  Cross-Val F1 (5-fold): {cv.mean():.4f} ± {cv.std():.4f}")
@@ -105,12 +105,23 @@ def run(df, X_scaled):
     #Ordina le feature dalla più importante e prende le prime 15
     indices     = np.argsort(importances)[::-1][:top_n]
 
+    # Usa i nomi reali delle feature se disponibili, altrimenti usa F1, F2...
+    if feature_names is not None:
+        def clean_name(n):
+            n = n.replace("genre_", "").replace("net_", "Net: ")
+            n = n.replace("status_enc", "Status")
+            n = n.replace("vote_average", "Voto medio").replace("vote_count", "N. voti")
+            n = n.replace("popularity", "Popolarità").replace("number_of_seasons", "Stagioni")
+            n = n.replace("number_of_episodes", "Episodi")
+            return n[:22]
+        labels = [clean_name(feature_names[i]) for i in indices]
+    else:
+        labels = [f"F{i+1}" for i in indices]
 
-
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(12, 5))
     plt.bar(range(top_n), importances[indices], color="coral", edgecolor="white")
-    plt.xticks(range(top_n), [f"F{i+1}" for i in indices], rotation=45, ha="right")
-    plt.title(f"Top {top_n} Feature Importance")
+    plt.xticks(range(top_n), labels, rotation=45, ha="right", fontsize=10)
+    plt.title(f"Top {top_n} Feature Importance — Random Forest")
     plt.ylabel("Importanza")
     plt.tight_layout()
     plt.savefig(os.path.join(PLOTS_DIR, "classification_feature_importance.png"), dpi=150)

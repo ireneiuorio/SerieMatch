@@ -1,4 +1,3 @@
-
 #Pulizia dati, encoding, normalizzazione
 import pandas as pd
 import numpy as np
@@ -139,4 +138,7 @@ def run(df):
     for col in genres_df_reset.columns:
         df[col] = genres_df_reset[col].values
 
-    return df, X_genres, X_scaled
+    # Nomi delle feature per il classificatore (usati nel grafico Feature Importance)
+    feature_names = list(features_full.columns)
+
+    return df, X_genres, X_scaled, feature_names

@@ -57,10 +57,10 @@ def run():
     missing_pct = (missing / len(df) * 100).round(2)
     mv_df = pd.DataFrame({"missing": missing, "%": missing_pct})
     #Filtra solo colonne con almeno un NaN.
-    mv_df = mv_df[mv_df["missing"] > 0].sort_values("%", ascending=False).head(15)
+    mv_df = mv_df[mv_df["missing"] > 0].sort_values("%", ascending=False)
     print(mv_df)
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(16, 5))
     #Grafico
     mv_df["%"].plot(kind="bar", color="salmon", edgecolor="white")
     plt.title("Percentuale di Missing Values per Colonna")
@@ -81,37 +81,52 @@ def run():
     plt.savefig(os.path.join(PLOTS_DIR, "eda_vote_distribution.png"), dpi=150)
     plt.close()
 
-    #Distribuzione Popolarità
-    plt.figure(figsize=(8, 4))
-    sns.histplot(df["popularity"].dropna(), bins=40, kde=True, color="coral")
-    plt.title("Distribuzione della Popolarità")
-    plt.xlabel("Popolarità")
+    #Distribuzione Popolarità — Prima e Dopo il taglio outlier
+    pop     = df["popularity"].dropna()
+    p99     = pop.quantile(0.99)
+    pop_clean = pop[pop <= p99]
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+
+    #Prima: mostra la distribuzione grezza con la coda lunghissima
+    sns.histplot(pop, bins=60, kde=True, color="coral", ax=axes[0])
+    axes[0].set_title("Popolarità — Dataset Grezzo\n(distribuzione right-skewed con outlier estremi)")
+    axes[0].set_xlabel("Popolarità")
+    axes[0].set_ylabel("Count")
+
+    #Dopo: distribuzione pulita dopo il taglio al 99° percentile
+    sns.histplot(pop_clean, bins=40, kde=True, color="mediumseagreen", ax=axes[1])
+    axes[1].set_title(f"Popolarità — Dopo taglio al 99° percentile\n(outlier > {p99:.0f} rimossi)")
+    axes[1].set_xlabel("Popolarità")
+    axes[1].set_ylabel("Count")
+
+    plt.suptitle("Gestione Outlier — Popolarità", fontsize=13, fontweight="bold")
     plt.tight_layout()
     plt.savefig(os.path.join(PLOTS_DIR, "eda_popularity.png"), dpi=150)
     plt.close()
 
-    # Top Generi
+    # Tutti i Generi (solitamente ~20, tutti mostrati)
     all_genres    = [g for sublist in df["genres_list"] for g in sublist]
-    genre_counts  = pd.Series(all_genres).value_counts().head(15)
+    genre_counts  = pd.Series(all_genres).value_counts()
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(16, 5))
     genre_counts.plot(kind="bar", color="mediumseagreen", edgecolor="white")
-    plt.title("Top 15 Generi — Serie TV")
+    plt.title(f"Tutti i Generi — Serie TV ({len(genre_counts)} generi unici)")
     plt.ylabel("Numero di serie")
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=45, ha="right", fontsize=9)
     plt.tight_layout()
     plt.savefig(os.path.join(PLOTS_DIR, "eda_genres.png"), dpi=150)
     plt.close()
 
-    # Top Network
+    # Top 30 Network (oltre 30 il grafico diventa illeggibile)
     all_networks   = [n for sublist in df["networks_list"] for n in sublist]
-    network_counts = pd.Series(all_networks).value_counts().head(15)
+    network_counts = pd.Series(all_networks).value_counts().head(30)
 
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(18, 5))
     network_counts.plot(kind="bar", color="slateblue", edgecolor="white")
-    plt.title("Top 15 Network / Piattaforme")
+    plt.title("Top 30 Network / Piattaforme")
     plt.ylabel("Numero di serie")
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=45, ha="right", fontsize=8)
     plt.tight_layout()
     plt.savefig(os.path.join(PLOTS_DIR, "eda_networks.png"), dpi=150)
     plt.close()
