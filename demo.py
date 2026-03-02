@@ -300,7 +300,7 @@ def recommend(title, df, X_scaled, top_n=5):
     vec = X_scaled[idx]
     cdf = df[df["cluster"] == df.loc[idx, "cluster"]].copy()
     cdf["sim"] = [1 - cosine(vec, X_scaled[i]) for i in cdf.index]
-    res = cdf[cdf["name"].str.lower() != title.strip().lower()] \
+    res = cdf[cdf.index != idx] \
             .sort_values("sim", ascending=False).head(top_n)
     return res, df.loc[idx]
 
